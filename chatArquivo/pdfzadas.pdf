@@ -1,0 +1,392 @@
+Perfeito — vou explicar **linha a linha** os três códigos (Pilha, Fila, Lista).
+Para ficar mais fácil de acompanhar, **vou reproduzir cada código com comentários ao lado de cada linha** explicando o que ela faz. Se quiser, depois eu extraio só as linhas mais importantes ou resumo cada função.
+
+---
+
+# 1) PILHA (stack) — código com explicação linha a linha
+
+```c
+#include <stdio.h>          /* inclui funções de entrada/saída (printf, scanf) */
+#include <stdlib.h>         /* inclui malloc, free e outros utilitários */
+
+void push(int numero);      /* protótipo da função que insere elemento */
+int pop();                  /* protótipo da função que remove e retorna elemento */
+void imprimir();            /* protótipo da função que imprime a pilha */
+int verificarVazia();       /* protótipo para checar se a pilha está vazia */
+void inicializar();         /* protótipo para inicializar a pilha */
+
+typedef struct no {         /* define a estrutura do nó da pilha */
+	int dado;               /* campo que guarda o valor inteiro do nó */
+	struct no *anterior;    /* ponteiro para o nó abaixo (anterior) na pilha */
+} No;                       /* apelido 'No' para struct no */
+
+typedef struct pilha {      /* define a estrutura da pilha */
+	No *topo;               /* ponteiro para o nó que está no topo */
+} Pilha;                    /* apelido 'Pilha' para struct pilha */
+
+Pilha p;                    /* variável global p do tipo Pilha (a pilha usada) */
+
+void inicializar(){
+	p.topo = NULL;          /* topo NULL significa pilha vazia */
+}
+
+int verificarVazia(){
+	if(p.topo == NULL)      /* se não há nó no topo */
+		return 1;           /* retorna 1 = vazia */
+	else return 0;          /* retorna 0 = não vazia */
+}
+
+void push(int numero){
+	/* aloca memoria para um novo nó da pilha */
+	No *novoNoh = (No *) malloc(sizeof(No));
+	/* se foi alocado memoria, adiciona o novoNoh no topo da pilha */
+	if(novoNoh != NULL) {
+		/* guarda o elemento a inserir na pilha no membro dado do novoNoh */
+		novoNoh->dado = numero;
+		/* o ponteiro 'anterior' do novo nó aponta para o antigo topo */
+		novoNoh->anterior = p.topo;
+		/* atualiza o topo da pilha para o novo nó */
+		p.topo = novoNoh;	
+	} else{
+		/* se malloc falhou (memória insuficiente), informa o usuário */
+		printf("\nA pilha estah cheia pois nao ha mais memoria disponivel");
+	}
+}
+
+int pop(){
+	/* verificar se a pilha não está vazia */
+	if(!verificarVazia()) {
+		/* cria ponteiro auxiliar para o nó a ser removido */
+		No *aux;
+		/* cria variável para guardar o dado do nó a ser removido */
+		int dado;
+		/* aux aponta para o nó do topo */
+		aux = p.topo;
+		/* dado guarda o elemento do topo */
+		dado = p.topo->dado;
+		/* atualiza o topo da pilha para o próximo nó (abaixo do atual) */
+		p.topo = aux->anterior;
+		/* libera a memoria ocupada pelo nó removido */
+		free(aux);
+		/* retorna o valor do nó removido */
+		return dado;
+	} else {
+		/* se a pilha estiver vazia, informa o usuario e retorna 0 (pode-se alterar) */
+		printf("\nA pilha estah vazia.");
+		return 0;
+	}
+}
+
+void imprimir(){
+	/* verificar se a pilha não está vazia */
+	if(!verificarVazia()) {
+		/* declara ponteiro auxiliar para percorrer os nós */
+		No *aux;
+		/* começa a percorrer a partir do topo */
+		aux = p.topo;
+		/* enquanto não chegar no fim (NULL) */
+		while(aux != NULL) {
+			/* imprime o dado do nó atual */
+			printf(" %d", aux->dado);
+			/* avança para o nó abaixo (anterior) */
+			aux = aux->anterior;
+		}	
+	} else {
+		/* se estiver vazia, informa o usuario */
+		printf("\nA pilha esta vazia.");
+	}
+}
+
+int main(int argc, char *argv[]) {
+	int temp, opcao;
+	inicializar();            /* inicializa a pilha (topo = NULL) */
+
+	do {
+		/* exibir o menu */
+		printf("\n    MENU");
+		printf("\n1. Inicializar");
+		printf("\n2. Inserir");
+		printf("\n3. Remover");
+		printf("\n4. Imprimir");
+		printf("\n5. Sair");
+		printf("\nDigite a opcao desejada: ");
+		
+		/* ler a opcao desejada pelo usuario */
+		scanf("%d", &opcao);
+		
+		/* processar a funcionalidade */
+		switch(opcao) {
+			case 1:
+				inicializar();   /* reinicializa a pilha */
+				break;
+			case 2:
+				printf("Digite um numero: ");
+				scanf("%d", &temp);
+				push(temp);      /* insere número na pilha */
+				break;
+			case 3:
+				temp = pop();    /* remove e retorna o topo */
+				printf("Numero removido: %d", temp);
+				break;
+			case 4:
+				imprimir();      /* imprime todos os elementos da pilha */
+				break;
+			case 5:
+				printf("Encerrando o programa...");
+				break;
+			default:
+				printf("\nOpcao invalida. Escolha um numero valido de opcao.");
+		}
+		
+	} while(opcao != 5);        /* repete até o usuário escolher sair */
+}
+```
+
+---
+
+# 2) FILA (queue) — código com explicação linha a linha
+
+```c
+#include <stdio.h>          /* printf, scanf */
+#include <stdlib.h>         /* malloc, free */
+
+typedef struct no {
+    int dado;               /* valor do nó */
+    struct no *proximo;     /* ponteiro para o próximo nó na fila */
+} No;
+
+typedef struct fila {
+    No *inicio;             /* ponteiro para o início (onde se remove) */
+    No *fim;                /* ponteiro para o fim (onde se insere) */
+} Fila;
+
+Fila f;                    /* variável global que representa a fila */
+
+void inicializar() {
+    f.inicio = NULL;        /* indica fila vazia */
+    f.fim = NULL;
+}
+
+int verificarVazia() {
+    return f.inicio == NULL;/* retorna 1 se vazia, 0 se não */
+}
+
+void enqueue(int numero) {
+    No *novo = (No*) malloc(sizeof(No)); /* aloca um novo nó */
+
+    if (novo != NULL) {
+        novo->dado = numero;     /* guarda o dado */
+        novo->proximo = NULL;    /* será o último, então aponta para NULL */
+
+        if (verificarVazia())    /* se fila vazia */
+            f.inicio = novo;     /* início = novo nó */
+        else
+            f.fim->proximo = novo; /* caso contrário liga o antigo fim ao novo */
+
+        f.fim = novo;            /* atualiza o ponteiro fim para o novo nó */
+    } else {
+        printf("\nSem memoria disponivel."); /* malloc falhou */
+    }
+}
+
+int dequeue() {
+    if (!verificarVazia()) {    /* se não vazia */
+        No *aux = f.inicio;     /* aponta para o nó que será removido */
+        int dado = aux->dado;   /* guarda o valor para retornar */
+
+        f.inicio = aux->proximo;/* avança o início para o próximo nó */
+
+        if (f.inicio == NULL)   /* se, após remover, fila ficou vazia */
+            f.fim = NULL;       /* atualiza o fim também para NULL */
+
+        free(aux);              /* libera a memória do nó removido */
+        return dado;            /* retorna o valor removido */
+    } else {
+        printf("\nA fila esta vazia.");
+        return 0;               /* retorno padrão (poderia usar erro) */
+    }
+}
+
+void imprimir() {
+    if (!verificarVazia()) {
+        No *aux = f.inicio;     /* inicia a impressão a partir do início */
+
+        while (aux != NULL) {
+            printf(" %d", aux->dado); /* imprime o dado atual */
+            aux = aux->proximo;      /* avança para o próximo */
+        }
+    } else {
+        printf("\nA fila esta vazia.");
+    }
+}
+
+int main() {
+    int opcao, temp;
+    inicializar();            /* cria fila vazia */
+
+    do {
+        printf("\n--- MENU FILA ---");
+        printf("\n1. Inserir");
+        printf("\n2. Remover");
+        printf("\n3. Imprimir");
+        printf("\n4. Sair");
+        printf("\nEscolha: ");
+        scanf("%d", &opcao);
+
+        switch(opcao) {
+            case 1:
+                printf("Digite um numero: ");
+                scanf("%d", &temp);
+                enqueue(temp);  /* insere no fim */
+                break;
+
+            case 2:
+                temp = dequeue(); /* remove do início */
+                printf("\nRemovido: %d", temp);
+                break;
+
+            case 3:
+                imprimir();      /* mostra todos os elementos da fila */
+                break;
+
+            case 4:
+                printf("\nSaindo...");
+                break;
+
+            default:
+                printf("\nOpcao invalida!");
+        }
+
+    } while (opcao != 4);      /* repete até sair */
+}
+```
+
+---
+
+# 3) LISTA ENCADEADA SIMPLES — código com explicação linha a linha
+
+```c
+#include <stdio.h>          /* printf, scanf */
+#include <stdlib.h>         /* malloc, free */
+
+typedef struct no {
+    int dado;               /* valor armazenado no nó */
+    struct no *proximo;     /* ponteiro para o próximo nó da lista */
+} No;
+
+typedef struct lista {
+    No *inicio;             /* ponteiro para o primeiro nó da lista */
+} Lista;
+
+Lista l;                    /* variável global que representa a lista */
+
+void inicializar() {
+    l.inicio = NULL;        /* lista vazia ao iniciar */
+}
+
+int verificarVazia() {
+    return l.inicio == NULL;/* retorna 1 se vazia, 0 se não */
+}
+
+/* Insere no início da lista (mais simples e eficiente) */
+void inserirInicio(int numero) {
+    No *novo = (No*) malloc(sizeof(No)); /* aloca novo nó */
+
+    if (novo != NULL) {
+        novo->dado = numero;     /* guarda o valor */
+        novo->proximo = l.inicio;/* novo aponta para o antigo primeiro nó */
+        l.inicio = novo;         /* atualiza início para o novo nó */
+    } else {
+        printf("\nSem memoria disponivel.");
+    }
+}
+
+/* Remove do início da lista e retorna o valor */
+int removerInicio() {
+    if (!verificarVazia()) {
+        No *aux = l.inicio;     /* nó a ser removido */
+        int dado = aux->dado;   /* guarda valor para retornar */
+
+        l.inicio = aux->proximo;/* atualiza início para o próximo nó */
+        free(aux);              /* libera memória */
+        return dado;            /* retorna o valor removido */
+    } else {
+        printf("\nA lista esta vazia.");
+        return 0;
+    }
+}
+
+void imprimir() {
+    if (!verificarVazia()) {
+        No *aux = l.inicio;     /* começa no primeiro nó */
+
+        while (aux != NULL) {
+            printf(" %d", aux->dado); /* imprime o dado atual */
+            aux = aux->proximo;      /* vai para o próximo */
+        }
+    } else {
+        printf("\nA lista esta vazia.");
+    }
+}
+
+int main() {
+    int opcao, temp;
+    inicializar();            /* deixa lista vazia */
+
+    do {
+        printf("\n--- MENU LISTA ---");
+        printf("\n1. Inserir no inicio");
+        printf("\n2. Remover do inicio");
+        printf("\n3. Imprimir");
+        printf("\n4. Sair");
+        printf("\nEscolha: ");
+        scanf("%d", &opcao);
+
+        switch(opcao) {
+            case 1:
+                printf("Digite um numero: ");
+                scanf("%d", &temp);
+                inserirInicio(temp); /* insere novo no início */
+                break;
+
+            case 2:
+                temp = removerInicio(); /* remove do início */
+                printf("\nRemovido: %d", temp);
+                break;
+
+            case 3:
+                imprimir();            /* imprime todos os nós */
+                break;
+
+            case 4:
+                printf("\nSaindo...");
+                break;
+
+            default:
+                printf("\nOpcao invalida!");
+        }
+
+    } while (opcao != 4);      /* repete até o usuário escolher sair */
+}
+```
+
+---
+
+# Observações importantes (dicas de prova)
+
+* Em chamadas a `malloc`, **sempre** cheque o retorno (NULL significa falha).
+* Use `free()` para cada `malloc` quando o nó deixar de ser necessário — caso contrário ocorre **memory leak**.
+* Em estruturas globais simples (como aqui) cuidado com concorrência; em prova explique que estamos assumindo execução single-thread.
+* Ao remover da fila, após atualizar `inicio`, sempre verifique se ficou `NULL` e atualize `fim = NULL` — isso evita ponteiros pendentes.
+* Se a prova pedir complexidade: operações de inserção/remoção aqui são O(1) (desde que você tenha ponteiros corretos), impressão é O(n).
+* Se perguntar sobre alternativas: para lista você pode implementar inserção/removal no fim (precisa de ponteiro fim ou percorrer a lista — O(n)).
+
+---
+
+Se quiser, faço agora:
+
+* comentários linha a linha em **português mais resumido** para usar como cola; ou
+* **questões teóricas simuladas** (10 perguntas com gabarito e explicação) para treinar; ou
+* **versões modificadas** dos códigos (ex.: remover do fim da lista, fila circular, pilha com contador de elementos).
+
+Qual próximo passo prefere?
